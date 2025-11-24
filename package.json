@@ -1,0 +1,44 @@
+{
+  "name": "telegram-ai-trading-bot",
+  "version": "3.0.0",
+  "description": "AI Trading Bot with Ensemble Signal Detection",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.64.0",
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1",
+    "moment-timezone": "^0.5.43",
+    "axios": "^1.5.0",
+    "ccxt": "^4.0.0",
+    "winston": "^3.10.0",
+    "bottleneck": "^2.19.5",
+    "technicalindicators": "^3.1.0"
+  },
+  "devDependencies": {
+    "jest": "^29.6.4",
+    "nodemon": "^3.0.1"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "**/*.js",
+      "!node_modules/**",
+      "!__tests__/**"
+    ]
+  },
+  "keywords": [
+    "trading",
+    "bot",
+    "telegram",
+    "crypto",
+    "signals"
+  ],
+  "author": "AI Trading Team",
+  "license": "MIT"
+}
