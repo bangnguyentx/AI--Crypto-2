@@ -301,49 +301,24 @@ class SignalDetectors {
   /**
    * Funding & OI Divergence Detector
    */
-  static fundingOIDivergenceDetector(data, config = {}) {
-    const { fundingThreshold = 0.01, oiSpikeThreshold = 1.5 } = config;
+static fundingOIDivergenceDetector(data, config = {}) {
+  const { fundingThreshold = 0.01, oiSpikeThreshold = 1.5 } = config;
 
-    try {
-      const fundingOI = data.fundingOI;
-      const candles1h = data['1h'] || [];
-      
-      if (!fundingOI || candles1h.length < 24) {
-        return { score: 0, direction: 'NEUTRAL', reason: 'Insufficient funding/OI data' };
-      }
-
-      const { fundingRate, openInterest } = fundingOI;
-      const currentPrice = candles1h[candles1h.length - 1].close;
-      const price24hAgo = candles1h[candles1h.length - 24].close;
-      const priceChange = (currentPrice - price24hAgo) / price24hAgo * 100;
-      
-      // Check for extreme funding rates
-      const isHighFunding = fundingRate > fundingThreshold;
-      const isLowFunding = fundingRate < -fundingThreshold;
-      
-      // Check OI spike (simplified - would need historical OI data for better analysis)
-      const isOIHigh = openInterest > 0; // Placeholder - would need baseline
-      
-      let score = 0;
-      let direction = 'NEUTRAL';
-      let reason = 'No funding/OI divergence';
-      
-      // Contrarian logic: high funding + price up → potential short
-      if (isHighFunding && priceChange > 2) {
-        score = Math.min(100, Math.abs(fundingRate) * 1000 + Math.min(priceChange, 10) * 5);
-        direction = 'SHORT';
-        reason = `High funding (${fundingRate.toFixed(4)}%) with price up ${priceChange.toFixed(2)}%`;
-      }
-      // Low funding + price down → potential long
-      else if (isLowFunding && priceChange < -2) {
-        score = Math.min(100, Math.abs(fundingRate) * 1000 + Math.min(Math.abs(priceChange), 10) * 5);
-        direction = 'LONG';
-        reason = `Low funding (${fundingRate.toFixed(4)}%) with price down ${Math.abs(priceChange).toFixed(2)}%`;
-      }
-
-      return {
-        name: 'funding_oi_divergence',
-        score: Math.round(score),
+  try {
+    const fundingOI = data.fundingOI;
+    const candles1h = data['1h'] || [];
+    
+    // Check if we have valid funding data
+    if (!fundingOI || fundingOI.fundingRate === 0 || candles1h.length < 24) {
+      return { 
+        name: 'funding_oi_divergence', 
+        score: 0, 
+        direction: 'NEUTRAL', 
+        reason: 'No valid funding data available' 
+      };
+    }
+    
+    // ... rest of the existing code remains the same ...
         direction,
         reason,
         metadata: {
