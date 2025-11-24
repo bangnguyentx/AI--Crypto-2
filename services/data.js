@@ -1,5 +1,6 @@
 /**
  * Data service for fetching market data from multiple sources
+ * FIXED: Completely removed funding rate functionality
  */
 
 const axios = require('axios');
@@ -131,67 +132,6 @@ class DataService {
   }
 
   /**
-   * Fetch funding rate and open interest
-   */
-async fetchFundingAndOI(symbol) {
-  return limiter.schedule(async () => {
-    try {
-      const source = await this.getActiveSource();
-      
-      let fundingRate = 0;
-      let openInterest = 0;
-      
-      // Convert symbol to futures format correctly
-      // BTCUSDT -> BTC/USDT for funding rate
-      const futuresSymbol = symbol.replace(/(.*)(USDT)$/, '$1/USDT');
-      
-      // Check if exchange supports funding rate
-      if (source.has['fetchFundingRate']) {
-        try {
-          const funding = await source.fetchFundingRate(futuresSymbol);
-          fundingRate = funding.fundingRate * 100; // Convert to percentage
-          logger.debug(`Fetched funding rate for ${symbol}: ${fundingRate}%`);
-        } catch (error) {
-          // Suppress warning for known unsupported symbols
-          if (!error.message.includes('not found') && !error.message.includes('invalid symbol')) {
-            logger.warn(`Could not fetch funding rate for ${symbol}: ${error.message}`);
-          }
-        }
-      }
-      
-      // Check if exchange supports open interest
-      if (source.has['fetchOpenInterest']) {
-        try {
-          const oi = await source.fetchOpenInterest(futuresSymbol);
-          openInterest = oi.openInterest;
-          logger.debug(`Fetched open interest for ${symbol}: ${openInterest}`);
-        } catch (error) {
-          // Suppress warning for known unsupported symbols
-          if (!error.message.includes('not found') && !error.message.includes('invalid symbol')) {
-            logger.warn(`Could not fetch open interest for ${symbol}: ${error.message}`);
-          }
-        }
-      }
-      
-      return {
-        symbol,
-        fundingRate,
-        openInterest,
-        timestamp: Date.now()
-      };
-    } catch (error) {
-      // Return default values without logging error
-      return {
-        symbol,
-        fundingRate: 0,
-        openInterest: 0,
-        timestamp: Date.now()
-      };
-    }
-  });
-}
-
-  /**
    * Fetch ticker data for correlation analysis
    */
   async fetchTicker(symbol) {
@@ -219,7 +159,7 @@ async fetchFundingAndOI(symbol) {
   }
 
   /**
-   * Fetch multiple timeframes data for a symbol
+   * Fetch multiple timeframes data for a symbol - NO FUNDING RATE
    */
   async fetchMultiTimeframeData(symbol) {
     try {
@@ -237,10 +177,11 @@ async fetchFundingAndOI(symbol) {
         }
       }
       
-      // Fetch additional market data
+      // Fetch additional market data (NO FUNDING RATE)
       data.orderbook = await this.fetchOrderBook(symbol);
-      data.fundingOI = await this.fetchFundingAndOI(symbol);
       data.ticker = await this.fetchTicker(symbol);
+      
+      // COMPLETELY REMOVED: data.fundingOI = await this.fetchFundingAndOI(symbol);
       
       return data;
     } catch (error) {
