@@ -1,6 +1,6 @@
 /**
  * Signal Detectors - Modular trading signal detection
- * FIXED: Removed all funding rate related errors
+ * FIXED: Completely removed funding rate functionality
  */
 
 const TradingUtils = require('../utils');
@@ -224,7 +224,7 @@ class SignalDetectors {
         return { score: 0, direction: 'NEUTRAL', reason: 'No orderbook data' };
       }
 
-      const { bids, asks, volumeImbalance } = orderbook;
+      const { bids, asks } = orderbook;
       
       if (!bids || !asks || bids.length === 0 || asks.length === 0) {
         return { score: 0, direction: 'NEUTRAL', reason: 'Invalid orderbook data' };
@@ -419,7 +419,7 @@ class SignalDetectors {
   }
 
   /**
-   * Run all detectors and return results - UPDATED
+   * Run all detectors and return results - UPDATED (NO FUNDING RATE)
    */
   static async runAllDetectors(data, config = {}) {
     const detectors = [
