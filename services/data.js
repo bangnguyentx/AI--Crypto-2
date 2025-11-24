@@ -133,49 +133,63 @@ class DataService {
   /**
    * Fetch funding rate and open interest
    */
-  async fetchFundingAndOI(symbol) {
-    return limiter.schedule(async () => {
-      try {
-        // For perpetual futures
-        const futuresSymbol = symbol.replace('USDT', '/USDT:USDT');
-        const source = await this.getActiveSource();
-        
-        let fundingRate = 0;
-        let openInterest = 0;
-        
+async fetchFundingAndOI(symbol) {
+  return limiter.schedule(async () => {
+    try {
+      const source = await this.getActiveSource();
+      
+      let fundingRate = 0;
+      let openInterest = 0;
+      
+      // Convert symbol to futures format correctly
+      // BTCUSDT -> BTC/USDT for funding rate
+      const futuresSymbol = symbol.replace(/(.*)(USDT)$/, '$1/USDT');
+      
+      // Check if exchange supports funding rate
+      if (source.has['fetchFundingRate']) {
         try {
-          // Try to get funding rate
-          const funding = await source.fetchFundingRate(symbol);
+          const funding = await source.fetchFundingRate(futuresSymbol);
           fundingRate = funding.fundingRate * 100; // Convert to percentage
+          logger.debug(`Fetched funding rate for ${symbol}: ${fundingRate}%`);
         } catch (error) {
-          logger.warn(`Could not fetch funding rate for ${symbol}`);
+          // Suppress warning for known unsupported symbols
+          if (!error.message.includes('not found') && !error.message.includes('invalid symbol')) {
+            logger.warn(`Could not fetch funding rate for ${symbol}: ${error.message}`);
+          }
         }
-        
+      }
+      
+      // Check if exchange supports open interest
+      if (source.has['fetchOpenInterest']) {
         try {
-          // Try to get open interest
           const oi = await source.fetchOpenInterest(futuresSymbol);
           openInterest = oi.openInterest;
+          logger.debug(`Fetched open interest for ${symbol}: ${openInterest}`);
         } catch (error) {
-          logger.warn(`Could not fetch open interest for ${symbol}`);
+          // Suppress warning for known unsupported symbols
+          if (!error.message.includes('not found') && !error.message.includes('invalid symbol')) {
+            logger.warn(`Could not fetch open interest for ${symbol}: ${error.message}`);
+          }
         }
-        
-        return {
-          symbol,
-          fundingRate,
-          openInterest,
-          timestamp: Date.now()
-        };
-      } catch (error) {
-        logger.error(`Failed to fetch funding/OI for ${symbol}: ${error.message}`);
-        return {
-          symbol,
-          fundingRate: 0,
-          openInterest: 0,
-          timestamp: Date.now()
-        };
       }
-    });
-  }
+      
+      return {
+        symbol,
+        fundingRate,
+        openInterest,
+        timestamp: Date.now()
+      };
+    } catch (error) {
+      // Return default values without logging error
+      return {
+        symbol,
+        fundingRate: 0,
+        openInterest: 0,
+        timestamp: Date.now()
+      };
+    }
+  });
+}
 
   /**
    * Fetch ticker data for correlation analysis
